@@ -92,7 +92,7 @@ class Learner:
             print(f'--- For policy up to: {self.max_lip_policy:.3f}')
 
         self.glob_min = 0.1
-        self.N_expectation = 16
+        self.N_expectation = args.learner_N_expectation  # Number of samples to approximate expectation
 
         # Define vectorized functions for loss computation
         self.loss_exp_decrease_vmap = jax.vmap(self.loss_exp_decrease, in_axes=(None, None, 0, 0, 0, None), out_axes=0)

@@ -58,7 +58,10 @@ class TripleIntegrator(BaseEnvironment, gym.Env):
         self.state_space = RectangularSet(low=-high, high=high, dtype=np.float32)
 
         # Set support of noise distribution (which is triangular, zero-centered)
-        high = np.array([1, 1, 1], dtype=np.float32)
+        if args.deterministic:
+            high = np.array([0, 0, 0], dtype=np.float32)
+        else:
+            high = np.array([1, 1, 1], dtype=np.float32)
         self.noise_space = spaces.Box(low=-high, high=high, dtype=np.float32)
         self.noise_dim = len(high)
 

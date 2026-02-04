@@ -20,6 +20,9 @@ def parse_arguments(linfty, datetime, cwd):
     parser.add_argument('--high_precision', action=argparse.BooleanOptionalAction, default=False,
                         help="If True, use JAX with 64-bit precision; otherwise, use 32-bit precision")
 
+    parser.add_argument('--deterministic', action=argparse.BooleanOptionalAction, default=False,
+                        help="If True, makes the stochastic noise in the dynamics zero")
+
     # GENERAL OPTIONS
     parser.add_argument('--model', type=str, default="LinearSystem",
                         help="Gymnasium environment ID")
@@ -123,6 +126,8 @@ def parse_arguments(linfty, datetime, cwd):
                         help="If True, also penalize the maximum (instead of the mean) exp. decrease violation")
     parser.add_argument('--eps_decrease', type=float, default=0,
                         help="Epsilon to the expected decrease loss function")
+    parser.add_argument('--learner_N_expectation', type=int, default=16,
+                        help="Number of samples to use in expectation computation in learner")
 
     ### VERIFIER ARGUMENTS
     parser.add_argument('--verify_batch_size', type=int, default=30000,
@@ -201,6 +206,11 @@ def parse_arguments(linfty, datetime, cwd):
     if args.exp_certificate and args.improved_softplus_lip:
         args.improved_softplus_lip = False
         print("Warning: No softplus used when using exponential certificate, turned off softplus Lipschitz improvement.")
+
+    if args.deterministic:
+        print(f'- Run in deterministic mode (no stochastic noise in dynamics; avoid discretizing the noise space).')
+        args.noise_partition_cells = 1
+        args.learner_N_expectation = 1
 
     return args
 

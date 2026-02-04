@@ -140,14 +140,21 @@ class Verifier:
         # Discretize the noise space
         cell_width = (env.noise_space.high - env.noise_space.low) / args.noise_partition_cells
         num_cells = np.array(args.noise_partition_cells * np.ones(len(cell_width)), dtype=int)
-        self.noise_vertices = define_grid(env.noise_space.low + 0.5 * cell_width,
+        noise_vertices = define_grid(env.noise_space.low + 0.5 * cell_width,
                                           env.noise_space.high - 0.5 * cell_width,
                                           size=num_cells)
-        self.noise_lb = self.noise_vertices - 0.5 * cell_width
-        self.noise_ub = self.noise_vertices + 0.5 * cell_width
+        self.noise_lb = noise_vertices - 0.5 * cell_width
+        self.noise_ub = noise_vertices + 0.5 * cell_width
 
-        # Integrated probabilities for the noise distribution
-        self.noise_int_lb, self.noise_int_ub = env.integrate_noise(self.noise_lb, self.noise_ub)
+        if args.deterministic:
+            # In deterministic mode, set noise bounds to zero
+            self.noise_lb = np.zeros_like(self.noise_lb)
+            self.noise_ub = np.zeros_like(self.noise_ub)
+            self.noise_int_lb = np.array([1])
+            self.noise_int_ub = np.array([1])
+        else:
+            # Integrated probabilities for the noise distribution
+            self.noise_int_lb, self.noise_int_ub = env.integrate_noise(self.noise_lb, self.noise_ub)
 
     def uniform_grid(self, env, mesh_size, Linfty, verbose=False):
         '''
