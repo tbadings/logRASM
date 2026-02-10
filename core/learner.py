@@ -95,7 +95,7 @@ class Learner:
         self.N_expectation = args.learner_N_expectation  # Number of samples to approximate expectation
 
         # Define vectorized functions for loss computation
-        self.loss_exp_decrease_vmap = jax.vmap(self.loss_exp_decrease, in_axes=(None, None, 0, 0, 0, None), out_axes=0)
+        self.loss_exp_decrease_vmap = jax.jit(jax.vmap(self.loss_exp_decrease, in_axes=(None, None, 0, 0, 0, None), out_axes=0))
 
         return
 

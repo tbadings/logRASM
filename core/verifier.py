@@ -553,6 +553,13 @@ class Verifier:
             ExpV_xPlus[i:j] = self.vmap_expectation_Vx_plus(self.V_state, jax.lax.stop_gradient(self.V_state.params), x,
                                                             u, self.noise_lb, self.noise_ub, self.noise_int_ub)
 
+        # ExpV_xPlus2 = jax.lax.map(self.vmap_expectation_Vx_plus, 
+        #         (self.V_state, jax.lax.stop_gradient(self.V_state.params), x_decrease[:, :self.env.state_dim], actions, self.noise_lb, self.noise_ub, self.noise_int_ub), 
+        #         batch_size=self.args.verify_batch_size)
+
+        assert jnp.allclose(ExpV_xPlus, ExpV_xPlus2)
+        
+
         ### Calculate differences in certificate value ###
         Vdiff_ibp = ExpV_xPlus - Vx_lb_decrease
         Vdiff_center = ExpV_xPlus - Vx_center_decrease

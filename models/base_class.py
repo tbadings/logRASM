@@ -11,10 +11,10 @@ class BaseEnvironment:
 
     def __init__(self):
         # Define vectorized functions
-        self.vreset = jax.vmap(self.reset_jax, in_axes=0, out_axes=0)
-        self.vstep = jax.vmap(self.step_train, in_axes=0, out_axes=0)
-        self.vstep_base = jax.vmap(self.step_base, in_axes=0, out_axes=0)
-        self.vstep_noise_batch = jax.vmap(self.step_noise_key, in_axes=(None, 0, None), out_axes=0)
+        self.vreset = jax.jit(jax.vmap(self.reset_jax, in_axes=0, out_axes=0))
+        self.vstep = jax.jit(jax.vmap(self.step_train, in_axes=0, out_axes=0))
+        self.vstep_base = jax.jit(jax.vmap(self.step_base, in_axes=0, out_axes=0))
+        self.vstep_noise_batch = jax.jit(jax.vmap(self.step_noise_key, in_axes=(None, 0, None), out_axes=0))
 
         self.state_dim = len(self.state_space.low)
 

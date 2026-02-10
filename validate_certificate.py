@@ -204,7 +204,7 @@ def loss_exp_decrease(env, exp_certificate, V_state, V_params, x, u, noise_key, 
     return V_expected
 
 
-loss_exp_decrease_vmap = jax.vmap(loss_exp_decrease, in_axes=(None, None, None, None, 0, 0, 0, None), out_axes=0)
+loss_exp_decrease_vmap = jax.jit(jax.vmap(loss_exp_decrease, in_axes=(None, None, None, None, 0, 0, 0, None), out_axes=0))
 
 
 def validate_RASM(checkpoint_path, cell_width=0.01, batch_size=10000, forward_pass_batch_size=1_000_000,
