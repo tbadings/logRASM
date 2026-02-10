@@ -102,7 +102,7 @@ class LinearSystem(BaseEnvironment, gym.Env):
         self.num_steps_until_reset = 100
 
         # Vectorized step, but only with different noise values
-        self.vstep_noise_set = jax.jit(self.step_noise_set, in_axes=(None, None, 0, 0), out_axes=(0, 0))
+        self.vstep_noise_set = jax.jit(jax.vmap(self.step_noise_set, in_axes=(None, None, 0, 0), out_axes=(0, 0)))
 
         # Set to reset to in training (typically the initial state set, or the whole state space)
         self.reset_space = self.state_space
