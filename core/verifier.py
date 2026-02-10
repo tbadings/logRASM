@@ -553,10 +553,30 @@ class Verifier:
             ExpV_xPlus[i:j] = self.vmap_expectation_Vx_plus(self.V_state, jax.lax.stop_gradient(self.V_state.params), x,
                                                             u, self.noise_lb, self.noise_ub, self.noise_int_ub)
 
-        # ExpV_xPlus2 = jax.lax.map(self.vmap_expectation_Vx_plus, 
-        #         (self.V_state, jax.lax.stop_gradient(self.V_state.params), x_decrease[:, :self.env.state_dim], actions, self.noise_lb, self.noise_ub, self.noise_int_ub), 
-        #         batch_size=self.args.verify_batch_size)
+        # --- 1. Move everything to device once ---
+        x_decrease_dev = jax.device_put(x_decrease)     # whole array to GPU
+        actions_dev    = jax.device_put(actions)        # whole array to GPU
 
+        # preallocate host-side output (or device-side if you prefer)
+        ExpV_xPlus2 = np.empty(len(x_decrease), dtype=np.float32)
+
+        batch = self.args.verify_batch_size
+        num_batches = int(np.ceil(len(x_decrease) / batch))
+
+        for b in tqdm(range(num_batches), desc='Compute E[V(x_{k+1})]'):
+            i = b * batch
+            j = min(i + batch, len(x_decrease))
+            # slice from device array -> this is a device slice (no host transfer of the whole array)
+            x_chunk = x_decrease_dev[i:j, :self.env.state_dim]
+            u_chunk = actions_dev[i:j]
+
+            # run compiled kernel (fast, no recompile)
+            out_chunk = self.vmap_expectation_Vx_plus(self.V_state, jax.lax.stop_gradient(self.V_state.params), x_chunk,
+                                                      u_chunk, self.noise_lb, self.noise_ub, self.noise_int_ub)
+
+            # bring the *result chunk* back to host (one small transfer)
+            ExpV_xPlus2[i:j] = np.asarray(out_chunk)
+            
         assert jnp.allclose(ExpV_xPlus, ExpV_xPlus2)
         
 
