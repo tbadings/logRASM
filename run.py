@@ -227,7 +227,6 @@ if __name__ == "__main__":
     # %%
 
     # Main Learner-Verifier loop
-    update_policy_after_iteration = 3
     LOGG.add_info(key='status', value='none')
 
     for i in range(args.cegis_iterations):
@@ -279,7 +278,7 @@ if __name__ == "__main__":
                     fail = False
                     if args.update_certificate:
                         V_state = V_state.apply_gradients(grads=V_grads)
-                    if args.update_policy and i >= update_policy_after_iteration:
+                    if args.update_policy and i >= args.update_policy_after_iteration:
                         Policy_state = Policy_state.apply_gradients(grads=Policy_grads)
 
                 if fail:

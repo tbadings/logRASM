@@ -60,6 +60,8 @@ def parse_arguments(linfty, datetime, cwd):
                         help="Total number of steps for pretraining the policy")
     parser.add_argument('--pretrain_num_envs', type=int, default=10,
                         help="Number of parallel environments in PPO (for policy initialization")
+    parser.add_argument('--update_policy_after_iteration', type=int, default=3,
+                        help="First CEGIS iteration to start updating the policy network")
 
     ### JAX PPO arguments
     parser.add_argument('--ppo_max_policy_lipschitz', type=float, default=10,

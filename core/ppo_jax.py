@@ -15,7 +15,6 @@ import jax.numpy as jnp
 import numpy as np
 import optax
 import orbax.checkpoint
-import tensorflow_probability.substrates.jax.distributions as tfp
 from flax import struct
 from flax.training import orbax_utils
 from flax.training.train_state import TrainState
@@ -27,6 +26,20 @@ from jax.lax import stop_gradient
 from core.buffer import define_grid
 from core.jax_utils import MLP, create_train_state, lipschitz_coeff, orbax_set_config
 
+def _normal_log_prob(mean: jnp.ndarray, std: jnp.ndarray, x: jnp.ndarray):
+    """
+    Elementwise normal log-probability. Sum over last axis for multivariate actions.
+    """
+    var = std ** 2
+    log_prob = -0.5 * ((x - mean) ** 2) / var - jnp.log(std) - 0.5 * jnp.log(2.0 * jnp.pi)
+    return log_prob
+
+def _normal_entropy(std: jnp.ndarray):
+    """
+    Elementwise entropy of normal distribution. Sum over last axis for multivariate actions.
+    """
+    # Per-dim entropy: 0.5*(1 + log(2*pi)) + log(std)
+    return 0.5 * (1.0 + jnp.log(2.0 * jnp.pi)) + jnp.log(std)
 
 @flax.struct.dataclass
 class PPOargs:
@@ -219,10 +232,9 @@ def get_action_and_value2(
     value = agent_state.critic_fn(params['critic'], obs)
     action_std = jnp.exp(action_logstd)
 
-    probs = tfp.Normal(action_mean, action_std)
-
-    retval1 = probs.log_prob(action).sum(1)
-    retval2 = probs.entropy().sum(1)
+    # compute log_prob and entropy using JAX
+    retval1 = _normal_log_prob(action_mean, action_std, action).sum(axis=-1)
+    retval2 = _normal_entropy(action_std).sum(axis=-1)
     retval3 = value.squeeze()
 
     return retval1, retval2, retval3
@@ -252,10 +264,9 @@ def get_action_and_value(agent_state: AgentState, next_obs: np.ndarray, next_don
     action_std = jnp.exp(action_logstd)
 
     # Sample continuous actions from Normal distribution
-    probs = tfp.Normal(action_mean, action_std)
     key, subkey = jax.random.split(key)
-    action = probs.sample(seed=subkey)
-    logprob = probs.log_prob(action).sum(1)
+    action = action_mean + action_std * jax.random.normal(subkey, shape=action_mean.shape)
+    logprob = _normal_log_prob(action_mean, action_std, action).sum(axis=-1)
     storage = storage.replace(
         obs=storage.obs.at[step].set(next_obs),
         dones=storage.dones.at[step].set(next_done),
