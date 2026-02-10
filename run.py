@@ -42,7 +42,7 @@ if __name__ == "__main__":
     from core.ppo_jax import PPO, PPOargs
     from core.verifier import Verifier
     from core.jax_utils import lipschitz_coeff
-    from train_SB3 import pretrain_policy
+    # from train_SB3 import pretrain_policy
     from validate_certificate import validate_RASM
 
     # Flax imports
